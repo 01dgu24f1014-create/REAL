@@ -164,13 +164,13 @@
             var highlightLayer;
             window.selectedLotData = null;
 
-            // Fungsi kemaskini Sidebar
+            // Fungsi kemaskini Sidebar (DIBETULKAN PADANAN NAMA DATA)
             function updateSidebar(props) {
                 if (props) {
-                    document.getElementById('dispLot').innerText = props['NO LOT'] || props['nolot'] || '-';
-                    var luas = props['AREA'] || props['LUAS'] || props['Keluasan'] || props['keluasan'] || '0';
+                    document.getElementById('dispLot').innerText = props['NO_LOT'] || '-';
+                    var luas = props['AREA'] || '0';
                     document.getElementById('dispLuas').innerText = luas + " m²";
-                    document.getElementById('dispPemilik').innerText = props['PEMILIK'] || props['pemilik'] || "- Tiada Data -";
+                    document.getElementById('dispPemilik').innerText = props['tsp — pe'] || "- Tiada Data -";
                 } else {
                     document.getElementById('dispLot').innerText = "-";
                     document.getElementById('dispLuas').innerText = "-";
@@ -209,8 +209,8 @@
                 var layer_lotfinalreal_5 = new L.geoJson(json_lotfinalreal_5, {
                     onEachFeature: function(feature, layer) {
                         
-                        // Letak Popup pada peta
-                        var popContent = "<b>No Lot:</b> " + (feature.properties['NO LOT'] || feature.properties['nolot'] || "-") + "<br><b>Keluasan:</b> " + (feature.properties['AREA'] || feature.properties['LUAS'] || "-") + " m²";
+                        // Letak Popup pada peta (DIBETULKAN PADANAN NAMA DATA)
+                        var popContent = "<b>No Lot:</b> " + (feature.properties['NO_LOT'] || "-") + "<br><b>Keluasan:</b> " + (feature.properties['AREA'] || "-") + " m²";
                         layer.bindPopup(popContent);
 
                         layer.on({
@@ -248,7 +248,7 @@
                 document.getElementById('dispTotal').innerText = "Ralat Data";
             }
 
-            // Fungsi Cari Lot (Diperhebatkan)
+            // Fungsi Cari Lot (DIBETULKAN UNTUK CARI 'NO_LOT')
             function cariLot() {
                 var val = document.getElementById('inputLot').value.trim().toLowerCase();
                 if(!val) {
@@ -263,7 +263,9 @@
 
                 var found = false;
                 layer_lotfinalreal_5.eachLayer(function(layer) {
-                    var lotData = layer.feature.properties['NO LOT'] || layer.feature.properties['nolot'];
+                    // Ambil data NO_LOT yang tepat dari GeoJSON
+                    var lotData = layer.feature.properties['NO_LOT'];
+                    
                     if (lotData && lotData.toString().toLowerCase() === val) {
                         map.fitBounds(layer.getBounds(), { maxZoom: 20 });
                         highlightFeature({target: layer});
@@ -291,7 +293,7 @@
                 updateSidebar(null);
             }
 
-            // --- FUNGSI CETAK PDF ---
+            // --- FUNGSI CETAK PDF (DIBETULKAN PADANAN NAMA DATA) ---
             async function cetakPDF() {
                 if (!window.selectedLotData) { 
                     alert("Sila klik / cari satu lot di atas peta terlebih dahulu sebelum mencetak laporan!"); 
@@ -352,9 +354,9 @@
                         startY += 22;
                     };
 
-                    drawField("NOMBOR LOT", window.selectedLotData['NO LOT'] || window.selectedLotData['nolot']);
-                    drawField("NAMA PEMILIK", window.selectedLotData['PEMILIK'] || window.selectedLotData['pemilik'] || "TIADA MAKLUMAT REKOD");
-                    drawField("LUAS KAWASAN", (window.selectedLotData['AREA'] || window.selectedLotData['LUAS'] || "0") + " Meter Persegi");
+                    drawField("NOMBOR LOT", window.selectedLotData['NO_LOT']);
+                    drawField("NAMA PEMILIK", window.selectedLotData['tsp — pe'] || "TIADA MAKLUMAT REKOD");
+                    drawField("LUAS KAWASAN", (window.selectedLotData['AREA'] || "0") + " Meter Persegi");
                     drawField("KEGUNAAN TANAH", window.selectedLotData['KEGUNAAN'] || "BANGUNAN (KEDIAMAN)");
                     drawField("STATUS DATA", "SAH / AKTIF");
 
@@ -374,7 +376,7 @@
                     doc.text("Dokumen ini dijana secara automatik oleh sistem dan tidak memerlukan tandatangan fizikal.", 148.5, 195, { align: 'center' });
 
                     // Simpan Fail
-                    const namaFail = "Laporan_Lot_" + (window.selectedLotData['NO LOT'] || window.selectedLotData['nolot'] || "Baru") + ".pdf";
+                    const namaFail = "Laporan_Lot_" + (window.selectedLotData['NO_LOT'] || "Baru") + ".pdf";
                     doc.save(namaFail);
                     
                 } catch (error) {
