@@ -128,13 +128,21 @@
         document.getElementById("satRadio").onchange = function() { map.removeLayer(street); map.addLayer(satellite); };
         document.getElementById("streetRadio").onchange = function() { map.removeLayer(satellite); map.addLayer(street); };
 
-        // ================= 3. GAYA & KLIK LOT =================
+        // ================= 3. FUNGSI DAPATKAN NAMA PEMILIK (getOwnerName) =================
+        function getOwnerName(feature) {
+            // Ia akan cuba baca "tsp — pe". Kalau tiada, ia cuba "NAMA_PEMILIK", "PEMILIK". Kalau tiada langsung, keluar "-".
+            return feature.properties["tsp — pe"] || 
+                   feature.properties["NAMA_PEMILIK"] || 
+                   feature.properties["PEMILIK"] || 
+                   "-";
+        }
+
+        // ================= 4. GAYA & KLIK LOT =================
         var selectedLayer = null;
 
         function styleNormal() { return { color: '#ffffff', weight: 1.5, fillColor: '#8b5e3c', fillOpacity: 0.6 }; }
         function styleHighlight() { return { color: '#ff0000', weight: 3, fillColor: 'yellow', fillOpacity: 0.8 }; }
 
-        // DIKEMASKINI: Guna json_MERGE13_4
         var layer_MERGE13_4 = new L.geoJson(json_MERGE13_4, {
             style: styleNormal,
             onEachFeature: function(feature, layer) {
@@ -152,7 +160,9 @@
                     let noPA = feature.properties["tsp — _1"] || "-";
                     let noLot = feature.properties["NO_LOT"] || "-";
                     let luas = feature.properties["AREA"] ? parseFloat(feature.properties["AREA"]).toFixed(2) : "-";
-                    let pemilik = feature.properties["tsp — pe"] || "-";
+                    
+                    // Guna fungsi getOwnerName() di sini
+                    let pemilik = getOwnerName(feature);
 
                     let infoLengkap = `<b>No PA:</b> ${noPA}<br><b>No Lot:</b> ${noLot}<br><b>Keluasan:</b> ${luas} m²<br><b>Pemilik:</b> ${pemilik}`;
                     
@@ -178,7 +188,7 @@
         // Update Jumlah Lot di Menu
         document.getElementById("totalLot").innerHTML = layer_MERGE13_4.getLayers().length + " Lot Tanah";
 
-        // ================= 4. FUNGSI CARIAN LOT =================
+        // ================= 5. FUNGSI CARIAN LOT =================
         document.getElementById("findLot").addEventListener("click", function() {
             let searchValue = document.getElementById("searchLot").value.trim().toLowerCase();
             let dijumpai = false;
@@ -186,7 +196,7 @@
             layer_MERGE13_4.eachLayer(function(layer) {
                 if ((layer.feature.properties["NO_LOT"] || "").toString().toLowerCase() === searchValue) {
                     map.fitBounds(layer.getBounds(), { maxZoom: 20 });
-                    layer.fire('click'); // Jadikan ia auto-klik
+                    layer.fire('click'); // Auto-klik akan trigger getOwnerName & Update popup/dashboard
                     dijumpai = true;
                 }
             });
@@ -201,7 +211,7 @@
             map.fitBounds([[2.103090, 102.520846], [2.104445, 102.523314]]);
         });
 
-        // ================= 5. ON/OFF LAYER DI PANEL =================
+        // ================= 6. ON/OFF LAYER DI PANEL =================
         document.getElementById("lotCheck").onchange = function() {
             this.checked ? map.addLayer(layer_MERGE13_4) : map.removeLayer(layer_MERGE13_4);
         };
@@ -209,13 +219,49 @@
             this.checked ? map.addLayer(tandaLayer) : map.removeLayer(tandaLayer);
         };
 
-        // ================= 6. CETAK PDF =================
+        // ================= 7. CETAK PDF (DIKEMASKINI) =================
         document.getElementById("generatePDF").addEventListener("click", function() {
             if(!selectedLayer){
-                alert("Sila klik pada mana-mana lot tanah di peta terlebih dahulu.");
+                alert("Sila klik atau cari mana-mana lot tanah di peta terlebih dahulu.");
                 return;
             }
-            alert("Fungsi Generate PDF diaktifkan untuk Lot: " + selectedLayer.feature.properties["NO_LOT"]);
+
+            // Guna jsPDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Ambil data dari lot yang dipilih
+            let feature = selectedLayer.feature;
+            let noPA = feature.properties["tsp — _1"] || "-";
+            let noLot = feature.properties["NO_LOT"] || "-";
+            let luas = feature.properties["AREA"] ? parseFloat(feature.properties["AREA"]).toFixed(2) : "-";
+            let pemilik = getOwnerName(feature);
+
+            // Tulis tajuk ke PDF
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.text("MAKLUMAT LOT TANAH - TAMAN SAUJANA PUTRA", 20, 20);
+
+            // Garisan pembahagi
+            doc.setLineWidth(0.5);
+            doc.line(20, 25, 190, 25);
+
+            // Tulis maklumat data
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            doc.text("No PA      : " + noPA, 20, 40);
+            doc.text("No Lot     : " + noLot, 20, 50);
+            doc.text("Keluasan   : " + luas + " meter persegi", 20, 60);
+            doc.text("Pemilik    : " + pemilik, 20, 70);
+
+            // Tarikh Cetakan
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            let harini = new Date().toLocaleDateString('ms-MY');
+            doc.text("Dicetak pada: " + harini, 20, 90);
+
+            // Save PDF
+            doc.save("Maklumat_Lot_" + noLot + ".pdf");
         });
 
     </script>
